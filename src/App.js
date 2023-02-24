@@ -3,8 +3,6 @@ import VideoList from "./components/VideoList";
 import VideoAdder from "./components/VideoAdder";
 import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
-const backEndUrl = "https://youtube-videos-backend.up.railway.app/videos";
-
 const App = () => {
   const videoUrl = "https://www.youtube.com/embed/";
 
@@ -12,7 +10,10 @@ const App = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState(null);
   const [originalVideos, setOriginalVideos] = useState([]);
-
+  const [sortVideos, setSortVideos] = useState({
+    sortBy: "rating",
+    sortDirection: "desc",
+  });
   // Helper function to get the Video Url Link
   const getVideoUrl = function (video) {
     const regex = /v=([^&]*)/;
@@ -28,7 +29,8 @@ const App = () => {
 
   const fetchVideos = async () => {
     try {
-      const response = await fetch(backEndUrl);
+      const url = `http://localhost:5000/videos`;
+      const response = await fetch(url);
       const data = await response.json();
       const newVideoArray = data.map((video) => {
         return getVideoUrl(video);
@@ -48,7 +50,7 @@ const App = () => {
 
   const onVote = async (id, vote) => {
     try {
-      const response = await fetch(`${backEndUrl}/${id}`, {
+      const response = await fetch(`http://localhost:5000/videos/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -72,7 +74,7 @@ const App = () => {
 
   const onRemove = async (id) => {
     try {
-      const response = await fetch(`${backEndUrl}/${id}`, {
+      const response = await fetch(`http://localhost:5000/videos/${id}`, {
         method: "DELETE",
       });
 
@@ -88,7 +90,7 @@ const App = () => {
 
   const onAdd = async (video) => {
     try {
-      const response = await fetch(backEndUrl, {
+      const response = await fetch("http://localhost:5000/videos", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -124,6 +126,30 @@ const App = () => {
     }
   };
 
+  const handleSort = (sortBy) => {
+    const sortedVideos = [...videos].sort((a, b) => {
+      if (sortBy === "title") {
+        if (sortVideos.sortDirection === "asc") {
+          return a.title.localeCompare(b.title);
+        } else {
+          return b.title.localeCompare(a.title);
+        }
+      } else {
+        if (sortVideos.sortDirection === "asc") {
+          return a.rating - b.rating;
+        } else {
+          return b.rating - a.rating;
+        }
+      }
+    });
+
+    setVideos(sortedVideos);
+    setSortVideos({
+      sortBy: sortBy,
+      sortDirection: sortVideos.sortDirection === "asc" ? "desc" : "asc",
+    });
+  };
+
   const onClose = () => {
     setIsOpen(false);
   };
@@ -131,7 +157,14 @@ const App = () => {
   return (
     <div className="flex flex-col items-center">
       {error && <p>Failed to load resource: net::ERR_CONNECTION_REFUSED</p>}
-      <NavBar onSearch={onSearch} onAdd={onAdd} setIsOpen={setIsOpen} />
+      <NavBar
+        onSearch={onSearch}
+        onAdd={onAdd}
+        setIsOpen={setIsOpen}
+        sortingVideos={handleSort}
+        sortVideos={sortVideos}
+        setSortVideos={setSortVideos}
+      />
       <VideoAdder
         isOpen={isOpen}
         setIsOpen={setIsOpen}
