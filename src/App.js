@@ -3,9 +3,10 @@ import VideoList from "./components/VideoList";
 import VideoAdder from "./components/VideoAdder";
 import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
+
 const App = () => {
   const videoUrl = "https://www.youtube.com/embed/";
-
+  const apiUrl = "https://youtube-videos-backend.up.railway.app/videos";
   const [videos, setVideos] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState(null);
@@ -29,7 +30,7 @@ const App = () => {
 
   const fetchVideos = async () => {
     try {
-      const url = `http://localhost:5000/videos`;
+      const url = apiUrl;
       const response = await fetch(url);
       const data = await response.json();
       const newVideoArray = data.map((video) => {
@@ -50,7 +51,7 @@ const App = () => {
 
   const onVote = async (id, vote) => {
     try {
-      const response = await fetch(`http://localhost:5000/videos/${id}`, {
+      const response = await fetch(`${apiUrl}/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -74,7 +75,7 @@ const App = () => {
 
   const onRemove = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/videos/${id}`, {
+      const response = await fetch(`${apiUrl}/${id}`, {
         method: "DELETE",
       });
 
@@ -90,7 +91,7 @@ const App = () => {
 
   const onAdd = async (video) => {
     try {
-      const response = await fetch("http://localhost:5000/videos", {
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
