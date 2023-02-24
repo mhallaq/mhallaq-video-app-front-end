@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from "react";
-import VideoList from "./VideoList";
-import VideoAdder from "./VideoAdder";
-
+import VideoList from "./components/VideoList";
+import VideoAdder from "./components/VideoAdder";
+import NavBar from "./components/NavBar";
+import Footer from "./components/Footer";
 const backEndUrl = "https://youtube-videos-backend.up.railway.app/videos";
+
 const App = () => {
   const videoUrl = "https://www.youtube.com/embed/";
 
   const [videos, setVideos] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [error, setError] = useState(null);
+  const [originalVideos, setOriginalVideos] = useState([]);
 
   // Helper function to get the Video Url Link
   const getVideoUrl = function (video) {
@@ -31,7 +35,9 @@ const App = () => {
       });
       newVideoArray.sort((a, b) => b.rating - a.rating);
       setVideos(newVideoArray);
+      setOriginalVideos(newVideoArray);
     } catch (err) {
+      setError(err);
       console.error(err);
     }
   };
@@ -89,17 +95,32 @@ const App = () => {
         },
         body: JSON.stringify(video),
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to add video. Please try again later.");
+      }
+
       if (response.ok) {
         const newVideo = await response.json();
-        console.log("newVideo:", newVideo);
         setVideos([...videos, { ...getVideoUrl(newVideo) }]);
-        console.log(videos);
         setIsOpen(false);
       } else {
         console.error("Error adding video");
       }
     } catch (err) {
+      alert(err.message);
       console.error(err);
+    }
+  };
+
+  const onSearch = (searchTerm) => {
+    if (searchTerm.trim() === "") {
+      setVideos(originalVideos); // if search term is empty, show all videos
+    } else {
+      const filteredVideos = originalVideos.filter((video) =>
+        video.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setVideos(filteredVideos); // otherwise, filter videos by title
     }
   };
 
@@ -109,21 +130,19 @@ const App = () => {
 
   return (
     <div className="flex flex-col items-center">
+      {error && <p>Failed to load resource: net::ERR_CONNECTION_REFUSED</p>}
+      <NavBar onSearch={onSearch} onAdd={onAdd} setIsOpen={setIsOpen} />
       <VideoAdder
         isOpen={isOpen}
         setIsOpen={setIsOpen}
         onAdd={onAdd}
         onClose={onClose}
       />
-      <button
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        onClick={() => setIsOpen(true)}
-      >
-        Add Video
-      </button>
+
       <div className="flex flex-wrap">
         <VideoList videos={videos} onVote={onVote} onRemove={onRemove} />
       </div>
+      <Footer />
     </div>
   );
 };
